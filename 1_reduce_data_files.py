@@ -27,13 +27,16 @@ in_file_names = []
 
 if dataset == 'in':
     in_file_names = [
+        '2015Q1234_in.xlsx',
+        '2016Q1234_in.xlsx',
+        '2017Q1234_in.xlsx',
         '2018Q12_in.xlsx',
         '2018Q34_in.xlsx',
         '2019Q12_in.xlsx',
         '2019Q34_in.xlsx',
         '2020Q12_in.xlsx',
         '2020Q34_in.xlsx',
-        #'2021Q12_in.xlsx', #bad data
+        '2021Q12_in.xlsx',
         '2021Q34_in.xlsx',
         '2022Q12_in.xlsx',
         '2022Q34_in.xlsx',
@@ -42,13 +45,16 @@ if dataset == 'in':
         '2024Q12_in.xlsx',
         '2024Q34_in.xlsx',
         '2025Q12_in.xlsx',
-        '2025Q3_in.xlsx',
+        '2025Q34_in.xlsx',
     ]
 elif dataset == 'ready':
     in_file_names = [
     ]
 elif dataset == 'paid':
     in_file_names = [
+        '2015Q1234_paid.xlsx',
+        '2016Q1234_paid.xlsx',
+        '2017Q1234_paid.xlsx',
         '2018Q1234_paid.xlsx',
         '2019Q1234_paid.xlsx',
         '2020Q12_paid.xlsx',
@@ -62,10 +68,13 @@ elif dataset == 'paid':
         '2024Q12_paid.xlsx',
         '2024Q34_paid.xlsx',
         '2025Q12_paid.xlsx',
-        '2025Q3_paid.xlsx',
+        '2025Q34_paid.xlsx',
     ]
 elif dataset == 'pickup':
     in_file_names = [
+        '2015Q1234_pickup.xlsx',
+        '2016Q1234_pickup.xlsx',
+        '2017Q1234_pickup.xlsx',
         '2018Q12_pickup.xlsx',
         '2018Q34_pickup.xlsx',
         '2019Q12_pickup.xlsx',
@@ -81,7 +90,7 @@ elif dataset == 'pickup':
         '2024Q12_pickup.xlsx',
         '2024Q34_pickup.xlsx',
         '2025Q12_pickup.xlsx',
-        '2025Q3_pickup.xlsx',
+        '2025Q34_pickup.xlsx',
     ]
 
 try:
@@ -98,6 +107,7 @@ data_frames: List[pd.DataFrame] = []
 
 for f in in_file_names:
     try:
+        logging.info('FILE: %s' % f)
         in_file = join(data_dir, f)
         data_frames += reduce_file(in_file, dataset)
     except Exception as e:

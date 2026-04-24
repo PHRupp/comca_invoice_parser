@@ -17,15 +17,11 @@ Also, Files must be in order of time from earliest top to more recent bottom. Th
 some of the files have overlapping transactions where order matters to combine them.
 """
 
-dataset = 'in'  # in, ready, paid, pickup
-in_file_name = 'HC_%s.csv' % dataset
-out_file_name = 'HC_%s_final.csv' % dataset
+in_file_name = 'HC_%s.csv'
+out_file_name = 'HC_%s_final.csv'
 
 data_dir = 'G:/My Drive/LBA/MLX Admin/HC/Analysis/6mo Data Sets'
 log_file = './logs/tabularize_results.log'
-
-in_file = join(data_dir, in_file_name)
-out_file = join(data_dir, out_file_name)
 
 # Remove the log file
 if os.path.exists(log_file):
@@ -33,9 +29,14 @@ if os.path.exists(log_file):
 
 logging.basicConfig(filename=log_file, level=logging.INFO)
 
-try:
-    data = pd.read_csv(in_file)
-    data = parse_reduced_df(data, dataset)
-    data.to_csv(out_file, index=False)
-except Exception as e:
-    logging.error(tb.format_exc())
+for s in ['in', 'paid', 'pickup']: #, 'ready'
+
+    in_file = join(data_dir, in_file_name % s)
+    out_file = join(data_dir, out_file_name % s)
+
+    try:
+        data = pd.read_csv(in_file)
+        data = parse_reduced_df(data, s)
+        data.to_csv(out_file, index=False)
+    except Exception as e:
+        logging.error(tb.format_exc())
