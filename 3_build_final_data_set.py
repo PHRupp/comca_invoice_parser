@@ -72,6 +72,7 @@ try:
     data_final['Total'] = data_final['AmountPaid'].fillna(data_final['AmountPickup']).fillna(data_final['AmountIn'])
     drop_cols = ['AmountPaid', 'AmountPickup', 'AmountIn']
     data_final.drop(columns=drop_cols, inplace=True)
+    data_final['Total'] = data_final['Total'].str.replace('$', '', regex=False).astype(float)
 
     # clean up quantity, paid is priority, followed by pickup, ready, and in
     # Priority: Paid -> Pickup -> In. Fallback to 0 to ensure integer casting.
