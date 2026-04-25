@@ -27,13 +27,13 @@ in_file_names = []
 
 if dataset == 'in':
     in_file_names = [
-        '2015Q1234_in.xlsx',
-        '2016Q1234_in.xlsx',
-        '2017Q1234_in.xlsx',
-        '2018Q12_in.xlsx',
-        '2018Q34_in.xlsx',
-        '2019Q12_in.xlsx',
-        '2019Q34_in.xlsx',
+        #'2015Q1234_in.xlsx',
+        #'2016Q1234_in.xlsx',
+        #'2017Q1234_in.xlsx',
+        #'2018Q12_in.xlsx',
+        #'2018Q34_in.xlsx',
+        #'2019Q12_in.xlsx',
+        #'2019Q34_in.xlsx',
         '2020Q12_in.xlsx',
         '2020Q34_in.xlsx',
         '2021Q12_in.xlsx',
@@ -47,16 +47,17 @@ if dataset == 'in':
         '2025Q12_in.xlsx',
         '2025Q34_in.xlsx',
     ]
+    #in_file_names = ['2021Q34_in.xlsx',]
 elif dataset == 'ready':
     in_file_names = [
     ]
 elif dataset == 'paid':
     in_file_names = [
-        '2015Q1234_paid.xlsx',
-        '2016Q1234_paid.xlsx',
-        '2017Q1234_paid.xlsx',
-        '2018Q1234_paid.xlsx',
-        '2019Q1234_paid.xlsx',
+        #'2015Q1234_paid.xlsx',
+        #'2016Q1234_paid.xlsx',
+        #'2017Q1234_paid.xlsx',
+        #'2018Q1234_paid.xlsx',
+        #'2019Q1234_paid.xlsx',
         '2020Q12_paid.xlsx',
         '2020Q34_paid.xlsx',
         '2021Q12_paid.xlsx',
@@ -72,12 +73,12 @@ elif dataset == 'paid':
     ]
 elif dataset == 'pickup':
     in_file_names = [
-        '2015Q1234_pickup.xlsx',
-        '2016Q1234_pickup.xlsx',
-        '2017Q1234_pickup.xlsx',
-        '2018Q12_pickup.xlsx',
-        '2018Q34_pickup.xlsx',
-        '2019Q12_pickup.xlsx',
+        #'2015Q1234_pickup.xlsx',
+        #'2016Q1234_pickup.xlsx',
+        #'2017Q1234_pickup.xlsx',
+        #'2018Q12_pickup.xlsx',
+        #'2018Q34_pickup.xlsx',
+        #'2019Q12_pickup.xlsx',
         '2019Q34_pickup.xlsx',
         '2020Q12_pickup.xlsx',
         '2020Q34_pickup.xlsx',

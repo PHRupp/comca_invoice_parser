@@ -59,7 +59,7 @@ def reduce_section(
     # If the 'Time' column has phone numbers, then the names are over by 1 column to the right
     # This should be run before we further filter out rows in reduced_df
     reduced_df['Name'] = ''
-    col_shifted_ind = reduced_df['Time'].str.contains(PARTIAL_PHONE_NUMBER_PATTERN)
+    col_shifted_ind = reduced_df['Time'].str.contains(PARTIAL_PHONE_NUMBER_PATTERN_ONLY)
     if col_shifted_ind.sum() > 0:
         name_rows_ind = col_shifted_ind.to_list()
         names = df.loc[data_row_index:(section_end_row_index-1), 'Unnamed: 3']
@@ -77,6 +77,11 @@ def reduce_section(
             reduced_df.loc[i, 'Name'] = None if is_time else time_val
             reduced_df.loc[i, 'Date'] = '000' if is_phone else date_val #not valid area-code, prevents filtering when date column is empty
             reduced_df.loc[i, 'Time'] = time_val if is_time else (date_val if is_phone else None)
+
+            # if Time is unknown it's possible that the phone number is to the left column of time, if time contains name
+            if pd.isna(reduced_df.loc[i, 'Time']):
+                row_str = " ".join([i for i in df.iloc[data_row_index+i].values if pd.notna(i)])
+                reduced_df.loc[i, 'Time'] = get_partial_phone_number(row_str, False)
 
     # keep the strings consistent by having upper case
     reduced_df['Name'] = reduced_df['Name'].str.upper()
@@ -119,8 +124,9 @@ def reduce_file(in_file: str, dataset: str = 'paid') -> List[pd.DataFrame]:
     # Some of the data is shifted right
     section_row_indices1 = np.where(raw_df[title_col1] == section)[0]
     section_row_indices2 = np.where(raw_df[title_col2] == section)[0]
+    section_row_indices3 = np.where(raw_df[title_col3] == section)[0]
     section_end_row_indices = np.where(raw_df[run_date_col] == section_end_run_date)[0]
-    section_row_indices = np.concatenate( (section_row_indices1, section_row_indices2))
+    section_row_indices = np.concatenate( (section_row_indices1, section_row_indices2, section_row_indices3))
     section_row_indices.sort()
 
     # process each section (one per day)
