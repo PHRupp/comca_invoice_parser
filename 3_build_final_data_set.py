@@ -8,6 +8,10 @@ from os.path import join
 import numpy as np
 import pandas as pd
 
+from parser.utils import fix_phone_number
+
+pd.options.mode.chained_assignment = None  # default is 'warn'
+
 in_file_name = 'HC_%s_final.csv'
 out_file_name = 'HC_final.csv'
 
@@ -36,11 +40,8 @@ try:
     data_final = pd.merge(data_final, data_pickup, on='Invoice', how='outer', suffixes=('', 'Pickup'))
 
     # Fill in the Customer name from whatever is populated
-    data_final.loc[:,'Customer'] = data_final['CustomerNameIn']
-    is_na = data_final['Customer'].isna().to_list()
-    data_final.loc[is_na, 'Customer'] = data_final.loc[is_na, 'CustomerNamePaid']
-    is_na = data_final['Customer'].isna().to_list()
-    data_final.loc[is_na, 'Customer'] = data_final.loc[is_na, 'CustomerNamePickup']
+    # Priority: In -> Paid -> Pickup
+    data_final['Customer'] = data_final['CustomerNameIn'].fillna(data_final['CustomerNamePaid']).fillna(data_final['CustomerNamePickup'])
     drop_cols = ['CustomerNameIn', 'CustomerNamePaid', 'CustomerNamePickup']
     data_final.drop(columns=drop_cols, inplace=True)
 
@@ -50,50 +51,39 @@ try:
     data_final['Cleaned'] = pd.NaT
     data_final['Ready By'] = pd.NaT
     data_final['Collected'] = pd.to_datetime(data_final['DatePickup'] + " " + data_final['TimePickup'])
-    data_final['Paid Date'] = pd.to_datetime(data_final['DatePaid'] + " " + data_final['TimePaid'])
+    data_final['Payment Date'] = pd.to_datetime(data_final['DatePaid'] + " " + data_final['TimePaid'])
     drop_cols = ['DateIn', 'TimeIn', 'DatePickup', 'TimePickup', 'DatePaid', 'TimePaid']
     data_final.drop(columns=drop_cols, inplace=True)
 
     # clean up phone numbers, will completely exclude as this was fixed in another file
-    data_final.loc[:, "Phone"] = np.nan
     drop_cols = ['PhoneNumberIn', 'PhoneNumberPaid', 'PhoneNumberPickup']
+    data_final['Phone'] = [fix_phone_number(row) for row in data_final[drop_cols].values.tolist()]
+    data_final['Phone'] = data_final['Phone'].str.replace(r'\D', '', regex=True)
     data_final.drop(columns=drop_cols, inplace=True)
 
     # clean up amount, paid is priority, followed by pickup, ready, and in
-    data_final.loc[:,'Total'] = data_final['AmountPaid']
-    is_na = data_final['Total'].isna().to_list()
-    data_final.loc[is_na, 'Total'] = data_final.loc[is_na, 'AmountPickup']
-    is_na = data_final['Total'].isna().to_list()
-    data_final.loc[is_na, 'Total'] = data_final.loc[is_na, 'AmountIn']
+    # Priority: Paid -> Pickup -> In
+    data_final['Total'] = data_final['AmountPaid'].fillna(data_final['AmountPickup']).fillna(data_final['AmountIn'])
     drop_cols = ['AmountPaid', 'AmountPickup', 'AmountIn']
     data_final.drop(columns=drop_cols, inplace=True)
 
     # clean up quantity, paid is priority, followed by pickup, ready, and in
-    data_final.loc[:,'Pieces'] = data_final['QtyPaid']
-    is_na = data_final['Pieces'].isna().to_list()
-    data_final.loc[is_na, 'Pieces'] = data_final.loc[is_na, 'QtyPickup']
-    is_na = data_final['Pieces'].isna().to_list()
-    data_final.loc[is_na, 'Pieces'] = data_final.loc[is_na, 'QtyIn']
+    # Priority: Paid -> Pickup -> In. Fallback to 0 to ensure integer casting.
+    data_final['Pieces'] = data_final['QtyPaid'].fillna(data_final['QtyPickup']).fillna(data_final['QtyIn']).fillna(0).astype(int)
     drop_cols = ['QtyPaid', 'QtyPickup', 'QtyIn']
     data_final.drop(columns=drop_cols, inplace=True)
 
     # clean up payment type, paid is priority, followed by pickup, ready, and in
-    data_final.loc[:,'PaymentType'] = data_final['FoPPaid']
-    is_na = data_final['PaymentType'].isna().to_list()
-    data_final.loc[is_na, 'PaymentType'] = data_final.loc[is_na, 'FoPPickup']
+    # Priority: Paid -> Pickup
+    data_final['Payment Type'] = data_final['FoPPaid'].fillna(data_final['FoPPickup'])
     drop_cols = ['FoPPaid', 'FoPPickup']
     data_final.drop(columns=drop_cols, inplace=True)
-    data_final.loc[:, 'PaymentType'].replace({
-        'Discover': 'Card',
-        'VISA': 'Card',
-        'MC': 'Card',
-        'CASH': 'Cash',
-        'AMX': 'Card',
-        'Debit': 'Card',
-        'Split': 'Card',
-        'CK #1364': 'Cash',
-        'CK #721': 'Cash',
-    }, inplace=True)
+
+    # Map payment types to categories. Regex for 'CK' makes it robust to new check numbers.
+    data_final['Payment Type'] = data_final['Payment Type'].replace({
+        r'Discover|VISA|MC|AMX|Debit|Split|DEBIT|SPLIT': 'Card',
+        r'CASH|CK\s?#.*': 'Cash'
+    }, regex=True).fillna('')
 
     # drop and/or rename columns to match clean cloud
     drop_cols = ['TransactionTypeIn', 'TransactionTypePaid', 'TransactionTypePickup']
@@ -105,9 +95,33 @@ try:
         index=data_final.index[data_final['Order ID'].isnull()],
         inplace=True,
     )
+    
+    # Re-arrange the columns in the order to match clean cloud and column make inserts easy
+    final_columns = [
+        'Store ID', 'Store Name', 'Order ID', 'Placed', 'Staff Taking Order',
+        'Ready By', 'Cleaned', 'Staff Marking Cleaned', 'Collected', 'Staff Completing',
+        'Customer', 'Customer ID', 'Custom ID', 'Email', 'Phone', 'Address',
+        'Promo Signup ID', 'Pieces', 'Summary', 'Notes', 'Pickup', 'Pickup Date',
+        'Staff Pickup', 'Delivery', 'Bags In', 'Bags Out', 'Retail', 'Paid',
+        'Payment Type', 'Card Payment Type', 'Payment Date', 'Staff Taking Payment',
+        'Route #', 'Discount', 'Cash Discount', 'Product Rules Discount', 'Credit',
+        'Pre Pay Amount', 'Total', 'Total after Credit Used', 'Tax', 'Tax 2', 'Tax 3',
+        'Status', 'Locker Location ID', 'Locker Name', 'Section IDs', 'Rack', 'Total weight'
+    ]
 
-    print(data_final.dtypes)
+    # Add other columns to mirror Clean Cloud
+    # Ensure all columns exist; initialize new/missing ones with empty strings
+    data_final.loc[:, 'Store ID'] = 24942
+    data_final.loc[:, 'Store Name'] = 'MLX Hunters Creek Cleaners'
+    for col in final_columns:
+        if col not in data_final.columns:
+            data_final[col] = ""
+    data_final = data_final[final_columns]
+    data_final.sort_values(by='Placed', inplace=True)
+
     print(data_final)
+    print(data_final['Phone'])
+    print(data_final.dtypes)
 
     # print data to file
     data_final.to_csv(out_file, index=False)
