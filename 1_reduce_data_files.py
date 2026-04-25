@@ -18,7 +18,7 @@ Also, Files must be in order of time from earliest top to more recent bottom. Th
 some of the files have overlapping transactions where order matters to combine them.
 """
 
-dataset = 'in'  # in, ready, paid, pickup
+dataset = 'pickup'  # in, ready, paid, pickup
 data_dir = 'G:/My Drive/LBA/MLX Admin/HC/Analysis/6mo Data Sets'
 log_file = './logs/reduced_results.log'
 out_file_name = 'HC_%s.csv' % dataset
@@ -47,7 +47,6 @@ if dataset == 'in':
         '2025Q12_in.xlsx',
         '2025Q34_in.xlsx',
     ]
-    #in_file_names = ['2021Q34_in.xlsx',]
 elif dataset == 'ready':
     in_file_names = [
     ]
@@ -79,7 +78,7 @@ elif dataset == 'pickup':
         #'2018Q12_pickup.xlsx',
         #'2018Q34_pickup.xlsx',
         #'2019Q12_pickup.xlsx',
-        '2019Q34_pickup.xlsx',
+        #'2019Q34_pickup.xlsx',
         '2020Q12_pickup.xlsx',
         '2020Q34_pickup.xlsx',
         '2021Q12_pickup.xlsx',
