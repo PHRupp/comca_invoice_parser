@@ -55,6 +55,12 @@ try:
     drop_cols = ['DateIn', 'TimeIn', 'DatePickup', 'TimePickup', 'DatePaid', 'TimePaid']
     data_final.drop(columns=drop_cols, inplace=True)
 
+    # Check the dates if they are reasonable, fix those that aren't
+    data_final.loc[data_final['Collected'].dt.year < 2020, 'Collected'] = pd.NaT
+
+    # if the Placed date is missing, then fill it with Collected then Paid
+    data_final['Placed'] = data_final['Placed'].fillna(data_final['Collected']).fillna(data_final['Payment Date'])
+
     # clean up phone numbers, will completely exclude as this was fixed in another file
     drop_cols = ['PhoneNumberIn', 'PhoneNumberPaid', 'PhoneNumberPickup']
     data_final['Phone'] = [fix_phone_number(row) for row in data_final[drop_cols].values.tolist()]
@@ -119,9 +125,18 @@ try:
     data_final = data_final[final_columns]
     data_final.sort_values(by='Placed', inplace=True)
 
-    print(data_final)
-    print(data_final['Phone'])
-    print(data_final.dtypes)
+    # Map the customer ID from other file into data set for matching phone numbers
+    # Normalize map phone numbers to digits only to match data_final['Phone']
+    map_file = join(data_dir, 'HC_CC_CustomerIDMap.xlsx')
+    customer_map = pd.read_excel(map_file, sheet_name='customers')
+    customer_map['Phone'] = customer_map['Phone'].astype(str).str.replace(r'\D', '', regex=True)
+    customer_map = customer_map.drop_duplicates(subset='Phone')
+    id_mapping = customer_map.set_index('Phone')['Customer ID']
+    data_final['Customer ID'] = data_final['Phone'].map(id_mapping).fillna(data_final['Customer ID'])
+
+    # Remove records where customer IDs that are null
+    ind = data_final['Customer ID'].isna() | (data_final['Customer ID'] == "")
+    data_final.drop(index=data_final.index[ind], inplace=True)
 
     # print data to file
     data_final.to_csv(out_file, index=False)
